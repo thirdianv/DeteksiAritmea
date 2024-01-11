@@ -6,7 +6,7 @@
     <title>Upload Excel File</title>
 </head>
 <body>
-    <form action="{{ route('upload-model') }}" method="post" enctype="multipart/form-data">
+    <form action="{{ route('load-model') }}" method="post" enctype="multipart/form-data">
         @csrf
         <label for="excelFile">Choose Excel File:</label>
         <input type="file" name="excelFile" id="excelFile" accept=".xlsx, .xls">

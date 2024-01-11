@@ -6,6 +6,7 @@ use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\DownloadController;
 use Psy\VersionUpdater\Downloader;
 use App\Http\Controllers\ExcelController;
+use App\Http\Controllers\ModelController;
 
 // use App\Http\Controllers\test;
 /*
@@ -36,10 +37,14 @@ Route::get('/download-data', [DownloadController::class, 'downloadFile'])->name(
 // Route::get('/api/plot', [App\Http\Controllers\test::class, 'asdasdasd']);
 
     
-Route::group(['middleware' => ['web']], function () {
-    Route::get('/upload-model', [ExcelController::class, 'showUploadform'])->name('upload-model.form');
-    Route::post('/upload-model', [ExcelController::class, 'uploadExcel'])->name('upload-model');
-});
+// Route::group(['middleware' => ['web']], function () {
+//     Route::get('/upload-model', [ExcelController::class, 'showUploadform'])->name('upload-model.form');
+//     Route::post('/upload-model', [ExcelController::class, 'uploadExcel'])->name('upload-model');
+// });
+
+Route::post('/load-model', [ExcelController::class, 'loadExcel'])->name('load-model');
+// Route::post('/load-model', 'YourController@yourMethod')->name('load-model');
+Route::post('/predict-data', [ModelController::class, 'predictData'])->name('predict-data');
 
 // In routes/web.php
 
@@ -47,6 +52,12 @@ Route::group(['middleware' => ['web']], function () {
 Route::get('/trained-view', function () {
     return view('trained-view');
 })->name('trained-view');
+
+
+Route::post('/excel-data', [ExcelController::class, 'uploadExcel'])->name('excel-data');
+// Route::get('/passData', 'ModelController@predictData')->name('pass-data');
+
+// Route::post('/api/feature-extraction', 'FileUploadController@upload')->name('upload-file');
 
 
 // use Illuminate\Support\Facades\Route;

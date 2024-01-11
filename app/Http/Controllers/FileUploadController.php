@@ -58,7 +58,7 @@ class FileUploadController extends Controller
                 print($file_name);
                 // dd($file_name);
 
-                return redirect()->route('DownloadController', ['data' => $file_name]);
+                return redirect()->route('DownloadController', ['data' => $file_name, 'file' => file_get_contents($file_name)]);
                 // return View::make('/content', compact('file_name'));
                 // $path = $responseData['message'];
                 // $files = scandir($path);
