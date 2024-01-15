@@ -7,6 +7,8 @@ use App\Http\Controllers\DownloadController;
 use Psy\VersionUpdater\Downloader;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\ModelController;
+use App\Http\Controllers\PlotFileController;
+
 
 // use App\Http\Controllers\test;
 /*
@@ -27,7 +29,8 @@ Route::get('/', function () {
 // Route::get('/api/plot', [App\Http\Controllers\RandomPlotController::class, 'getPlot']);
 Route::get('/api/plot', [App\Http\Controllers\test::class, 'getPlot']);
 Route::get('/api/extract-features', [App\Http\Controllers\test::class, 'extract']);
-Route::get('/upload-form', [FileUploadController::class, 'showUploadForm']);
+// Route::get('/upload-form', [FileUploadController::class, 'showUploadForm']);
+Route::get('/upload-form', [FileUploadController::class, 'showUploadForm'])->name('upload-form');
 Route::post('/upload', [FileUploadController::class, 'upload']);
 Route::post('/api/extract', [FileUploadController::class, 'extract']);
 Route::get('/download-file/{data}', [DownloadController::class, 'downloadFile'])->name('download.file');
@@ -53,6 +56,8 @@ Route::get('/trained-view', function () {
     return view('trained-view');
 })->name('trained-view');
 
+Route::get('/download-file/{file_name}', 'FileController@download')->name('download-file');
+
 
 Route::post('/excel-data', [ExcelController::class, 'uploadExcel'])->name('excel-data');
 // Route::get('/passData', 'ModelController@predictData')->name('pass-data');
@@ -65,5 +70,10 @@ Route::post('/excel-data', [ExcelController::class, 'uploadExcel'])->name('excel
 // Route::get('/show-classification-report', function () {
 //     return view('show-classification-report');
 // })->name('trained-view');;
+
+Route::get('/plot-file', [PlotFileController::class, 'showPlot'])->name('plot-file');
+Route::get('/show-plot', function () {
+    return view('show-plot');
+})->name('show-plot');
 
     

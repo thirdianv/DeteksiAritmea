@@ -91,14 +91,19 @@ class ExcelController extends Controller
                 $modelPath = $responseData['model_path'];
                 $classifcation_reports = $responseData['classification_reports'];
 
-                // dd($responseData);
+                // session()->put('success', true);
+                // session()->flush();
                 return view('trained-view', ['success' => $success, 'accuracyData' => $accuracyData, 'modelPath' => $modelPath, 'classification_reports' => $classifcation_reports]);
 
 
 
             } else {
+                // dd($response->body());
                 // Handle failure
-                return redirect()->route('upload-model.form')->with('error', 'Failed to train model. Please try again.');
+                $message = json_decode($response->body(), true);
+                // session()->put('error', $message['error']);
+                // return redirect()->route('upload-form');
+                return redirect()->route('upload-form')->with('error', $message['error']);
             }
         } else {
             // Handle the case where file_get_contents fails

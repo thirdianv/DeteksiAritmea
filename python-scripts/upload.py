@@ -111,23 +111,33 @@ def empty_df():
     new_df = pd.DataFrame(columns=columns_list)
     return new_df
 
-def feature(path, training=True):
-    files = os.listdir(path)
-    print(files)
-    new_df = empty_df()
-    for file in files:
-        if file.endswith('.xlsx'):
-            print("Pengolahan : ", file, "\n")
-            data = read_data(os.path.join(path, file))
-            label = check_type(file)
-            fe = feature_extraction(data, label = label)
+import time
 
-            new_df.loc[len(new_df)] = fe
-            name = path + '\\' + 'fitur.xlsx'
-        else:
-            print(file)
+def feature(path, training=True):
+    new_df = empty_df()
+
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if file.endswith('.xlsx'):
+                start_time = time.time()
+                file_path = os.path.join(root, file)
+                print("Processing:", file_path)
+                
+                data = read_data(file_path)
+                label = check_type(file)
+                fe = feature_extraction(data, label=label)
+
+                new_df.loc[len(new_df)] = fe
+                end_time = time.time()
+                # print('execute time : ',end_time - start_time)
+
+    if len(new_df) == 0:
+        return 'No Excel files found in the specified path or its subdirectories!'
+
+    name = os.path.join(path, 'fitur.xlsx')
     new_df.to_excel(name, index=False)
     return name
+
 
 
 @app.route('/api/model', methods=['POST', 'GET'])
@@ -227,7 +237,7 @@ def fetch():
     
 @app.route('/api/train-model', methods=['GET'])
 def train_model():
-    # try:
+    try:
         print('\nTrain Model......')
         file_path = request.args.get('file_name')
         public_path = request.args.get('public_path')
@@ -249,9 +259,138 @@ def train_model():
 
         response_data = {'success': True, 'accuracy': accuracy_data, 'model_path':model_save_path, 'classification_reports': classification_reports}
         return jsonify(response_data), 200
-    # except Exception as e:
-    #     print("Error:", str(e))
-    #     return {'error': str(e)}, 500
+    except Exception as e:
+        print("Error:", str(e))
+        return {'error': str(e)}, 500
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+@app.route('/plot', methods=['GET'])
+def plot_file():
+    filename = request.args.get('file_name')
+    folder_path = request.args.get('file_path_fitur')
+    print(filename)
+    print(folder_path)
+
+    folder_path = os.path.dirname(folder_path)
+    file_path = os.path.join(folder_path, filename)
+    print('file to plot:', file_path)
+
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    df = pd.read_excel(file_path, header=2)
+
+    sample = list(range(1, len(df.index) + 1))
+    signal = df[df.columns[1]]
+
+    # Plot the raw signal
+    raw_plot = plot_signal(sample, signal, 'Raw Signal')
+
+    # Save the plot to a BytesIO buffer
+    filename_base = os.path.splitext(filename)[0]
+    save_path = os.path.join(folder_path, filename_base)
+
+    print('save path:', save_path)
+    print('file_name:', filename_base)
+
+    raw_save = save_plot(raw_plot, 'raw', folder_path, filename_base)
+
+    time_domain = time_frequency_domain(sample, signal)
+    time_domain_save = save_plot(time_domain, 'timedomain', folder_path, filename_base)
+
+    new_DFT = DFT(signal, '#1f77b4', 'DFT PCG 1')
+    new_DFT_save =  save_plot(new_DFT, 'DFT', folder_path, filename_base)
+
+    # print(raw_save, time_domain_save, new_DFT)
+
+    response_data = {
+        'success': True,
+        'images': {'raw': raw_save, 'time_domain': time_domain_save, 'dft': new_DFT_save}
+    }
+
+    return jsonify(response_data), 200
+
+def plot_signal(x, y, title):
+    plt.figure(figsize=(12, 8))
+    plt.plot(x, y)
+    plt.xlabel('Sample')
+    plt.ylabel('Signal')
+    plt.title(title)
+    plt.grid(True)
+    return plt  # Return the plt object for further manipulation or saving
+
+def DFT(sinyal, clr, judul, fs=1000):
+    N = len(sinyal)
+    re_X = np.zeros(N)
+    im_X = np.zeros(N)
+    magX = np.zeros(N)
+
+    # DFT
+    for k in range(N):
+        for n in range(N):
+            re_X[k] += sinyal[n] * np.cos(2 * np.pi * k * n / N)
+            im_X[k] -= sinyal[n] * np.sin(2 * np.pi * k * n / N)
+        magX[k] = np.sqrt(re_X[k]**2 + im_X[k]**2)
+
+    # Plot
+    k = np.arange(0, N//2)
+    freq = k * fs / N
+    plt.figure(figsize=(12, 8))
+    plt.plot(freq, magX[:N//2], color=clr, linewidth=2)
+    plt.title(judul, fontweight="bold", size=16)
+    plt.xlabel('Frequency (Hz)', size=14)
+    plt.ylabel('Magnitude', size=14)
+    plt.grid(True)
+    return plt
+
+def time_frequency_domain(sample, signal):
+    time_intervals = np.cumsum(sample) / 1000.0
+    plt.figure(figsize=(12, 8))
+    plt.plot(time_intervals, signal)
+    plt.xlabel('Time (s)')
+    # plt.xticks=(np.arange(0,50))
+    plt.ylabel('Amplitude (mV)')
+    plt.title("Time Domain Signal")
+    plt.grid(True)
+    return plt  # Return the plt object for further manipulation or saving
+
+def save_plot(plt, plot_type, folder_path, filename_base):
+    save_path = os.path.join(folder_path, f'{filename_base}_{plot_type}_plot.png')
+    public_path = parent_and_file_dir(save_path)
+    plt.savefig(save_path, format='png')
+    plt.clf()
+    return public_path
+
+def parent_and_file_dir(file_path):
+    # Get the directory of the file
+    folder_location = os.path.dirname(file_path)
+
+    # Get the parent directory name
+    parent_directory = os.path.basename(folder_location)
+
+    # Get the desired output
+    desired_output = os.path.join(parent_directory, os.path.basename(file_path))
+
+    return desired_output
+
+import fnmatch
+@app.route('/get-files', methods=['GET'])
+def get_filtered_files(num_normal = 5, num_abnormal = 5):
+
+    folder_path = request.args.get('folder_path')
+
+    all_files = os.listdir(folder_path)
+
+    # Filter normal files
+    normal_files = [file for file in all_files if fnmatch.fnmatch(file, 'normal*.xlsx')][:num_normal]
+
+    # Filter abnormal files
+    abnormal_files = [file for file in all_files if fnmatch.fnmatch(file, 'abnormal*.xlsx')][:num_abnormal]
+
+    return jsonify({'files' : normal_files + abnormal_files}), 200
 
 
 

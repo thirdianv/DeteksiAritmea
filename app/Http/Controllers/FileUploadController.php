@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\File;
 
 
 
@@ -54,11 +55,13 @@ class FileUploadController extends Controller
                 // // Print the JSON string
                 // echo $jsonStr;
                 $file_name = $responseData['feature_name'];
+                $files= dirname($file_name);
+                
                 // echo $file_name;
-                print($file_name);
-                // dd($file_name);
+                // print($file_name);
+                // dd($files);
 
-                return redirect()->route('DownloadController', ['data' => $file_name, 'file' => file_get_contents($file_name)]);
+                return redirect()->route('DownloadController', ['data' => $file_name, 'file' => file_get_contents($file_name), 'files'=>$files]);
                 // return View::make('/content', compact('file_name'));
                 // $path = $responseData['message'];
                 // $files = scandir($path);
