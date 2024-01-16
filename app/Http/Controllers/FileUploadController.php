@@ -32,10 +32,14 @@ class FileUploadController extends Controller
             $fileName = time() . '_' . $file->getClientOriginalName();
 
             $file->storeAs('public', $fileName); // Simpan file di storage public
+            $path = storage_path('app\\public\\');
+            // dd($path, $fileName);
 
             $data = [
                 'file_name' => $fileName,
+                'file_path' => $path,
             ];
+
 
             $url = 'http://127.0.0.1:5000/api/model'; // Sesuaikan dengan alamat API Flask Anda
             $client = new Client();

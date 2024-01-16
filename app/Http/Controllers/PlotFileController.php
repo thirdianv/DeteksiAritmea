@@ -19,6 +19,11 @@ class PlotFileController extends Controller
         
         if ($response->successful()) {
             $images = $response->json('images');
+
+            $images = array_map(function ($image) {
+                return str_replace('\\', '/', $image);
+            }, $images);
+            // dd($images);
         
             return view('show-plot', compact('images'));
         } else {

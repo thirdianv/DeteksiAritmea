@@ -147,7 +147,7 @@ def model():
         return jsonify({'error': 'Nama file tidak disediakan'}), 400
 
     file_name = request.json['file_name']
-    folder_path = 'F:\\vicky\\DeteksiAritmea\\storage\\app\\public'  # Ganti dengan path folder Anda
+    folder_path = request.json['file_path']  # Ganti dengan path folder Anda
     new_folder = file_check(file_name, folder_path)
 
     folder_name = os.path.splitext(os.path.basename(file_name))[0]  # Ambil nama file tanpa ekstensi
@@ -244,6 +244,7 @@ def train_model():
 
         # Membagi string berdasarkan karakter "\"
         parts = file_path.split('\\')
+        print(parts)
 
         # Mengambil bagian yang diinginkan (di sini: indeks ke-6)
         model_folder = parts[6]
@@ -286,8 +287,6 @@ def plot_file():
     sample = list(range(1, len(df.index) + 1))
     signal = df[df.columns[1]]
 
-    # Plot the raw signal
-    raw_plot = plot_signal(sample, signal, 'Raw Signal')
 
     # Save the plot to a BytesIO buffer
     filename_base = os.path.splitext(filename)[0]
@@ -296,9 +295,12 @@ def plot_file():
     print('save path:', save_path)
     print('file_name:', filename_base)
 
-    raw_save = save_plot(raw_plot, 'raw', folder_path, filename_base)
+    raw = raw_signal_plot(sample, signal)
+    raw_save = save_plot(raw, 'raw', folder_path, filename_base)
 
-    time_domain = time_frequency_domain(sample, signal)
+    lendf = len(df.index)
+
+    time_domain = time_domain_plot(lendf, signal)
     time_domain_save = save_plot(time_domain, 'timedomain', folder_path, filename_base)
 
     new_DFT = DFT(signal, '#1f77b4', 'DFT PCG 1')
@@ -313,14 +315,6 @@ def plot_file():
 
     return jsonify(response_data), 200
 
-def plot_signal(x, y, title):
-    plt.figure(figsize=(12, 8))
-    plt.plot(x, y)
-    plt.xlabel('Sample')
-    plt.ylabel('Signal')
-    plt.title(title)
-    plt.grid(True)
-    return plt  # Return the plt object for further manipulation or saving
 
 def DFT(sinyal, clr, judul, fs=1000):
     N = len(sinyal)
@@ -346,19 +340,63 @@ def DFT(sinyal, clr, judul, fs=1000):
     plt.grid(True)
     return plt
 
-def time_frequency_domain(sample, signal):
-    time_intervals = np.cumsum(sample) / 1000.0
+def raw_signal_plot(sample, signal):
+    # print('raw signal: ')
+    # print(sample, signal)
+    # RAW SIGNAL PLOTTING
     plt.figure(figsize=(12, 8))
-    plt.plot(time_intervals, signal)
-    plt.xlabel('Time (s)')
-    # plt.xticks=(np.arange(0,50))
+    plt.plot(sample, signal)
+    plt.xlabel('Sample')
     plt.ylabel('Amplitude (mV)')
-    plt.title("Time Domain Signal")
+    plt.title("Raw Signal")
+    return plt
+
+# def time_frequency_domain(sample, signal):
+#     N = len(sample)
+
+#     fs = 1 / (sum(signal) / N)
+#     ts = 1 / fs
+
+#     # TIME DOMAIN PLOTTING
+#     x = N * ts
+#     y = signal
+
+#     plt.figure(figsize=(12, 8))
+#     plt.plot(x, y)
+#     plt.xlabel('Time (s)')
+#     plt.xlim(0, 1000)
+#     plt.ylim(0.4, 1)
+#     plt.ylabel('Amplitude (mV)')
+#     plt.title("Time Domain Signal")
+#     return plt
+
+def time_domain_plot(fs, signal):
+    """
+    Plots the time domain representation of a signal.
+
+    Parameters:
+    - signal: The input signal.
+    - fs: Sampling frequency.
+    - title: Title for the plot (default is "Time Domain Plot").
+    """
+    # Generate time vector
+    fs = 1/(sum(signal)/1000)
+    t = np.arange(0, len(signal) / fs, 1 / fs)
+    # print("time domain: ")
+    # print(fs, t , signal)
+
+    # Plot the time domain representation
+    plt.plot(t, signal)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.title("Time Domain Plot")
     plt.grid(True)
-    return plt  # Return the plt object for further manipulation or saving
+    return plt
+
 
 def save_plot(plt, plot_type, folder_path, filename_base):
     save_path = os.path.join(folder_path, f'{filename_base}_{plot_type}_plot.png')
+    print(save_path)
     public_path = parent_and_file_dir(save_path)
     plt.savefig(save_path, format='png')
     plt.clf()

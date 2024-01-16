@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File Zip</title>
+    <title>Arrhythmia Detection</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     {{-- <script type="module" src="https://cdn.jsdelivr.net/npm/unrar-promise"></script> --}}
@@ -19,8 +19,12 @@
             height: 100vh;
         }
 
-        h2 {
+        .container {
+            max-width: 600px;
             text-align: center;
+        }
+
+        h2 {
             color: #333;
         }
 
@@ -29,7 +33,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 300px;
             text-align: center;
         }
 
@@ -52,6 +55,16 @@
 
         button:hover {
             background-color: #0056b3;
+        }
+
+        #progressContainer {
+            display: none;
+            margin-top: 20px;
+        }
+
+        progress {
+            width: 100%;
+            margin-bottom: 10px;
         }
 
         .alert {
@@ -85,16 +98,21 @@
     </script>
 </head>
 <body>
-    <form method="POST" action="/upload" enctype="multipart/form-data" id="zipForm">
-        @csrf
-        <h2>Upload File Zip</h2>
-        <input type="file" name="zip_file" id="zipFileInput" accept=".zip, .rar">
-        <button type="button submit" onclick="countFiles()">Unggah</button>
-        <div id="progressContainer" style="display: none;">
-            <progress id="fileProgress" max="100" value="0"></progress>
-            <p id="progressText">0%</p>
-        </div>
-    </form>
+    <div style="text-align: center" class="container">
+        <h2>Arrhythmia Detection</h2>
+        <p style="color:#666">
+            Welcome to the Arrhythmia Detection page. This platform allows you to upload a ZIP or RAR file containing known signal data for arrhythmia detection. The system will perform feature extraction on the provided signals, enabling further training of a model based on the extracted features. Use the file input below to upload your data and initiate the process. Upon completion, you'll receive feedback on the progress. Get started by selecting a file and clicking the "Start Extraction" button.
+        </p>
+        <form method="POST" action="/upload" enctype="multipart/form-data" id="zipForm">
+            @csrf
+            <input type="file" name="zip_file" id="zipFileInput" accept=".zip, .rar">
+            <button type="button submit" onclick="countFiles()">Start Extraction</button>
+            <div id="progressContainer">
+                <progress id="fileProgress" max="100" value="0"></progress>
+                <p id="progressText">0%</p>
+            </div>
+        </form>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -103,7 +121,7 @@
 
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                     alert('Please select a ZIP file.');
-                return;
+                    return;
                 }
 
                 const file = fileInput.files[0];
@@ -131,8 +149,8 @@
                     console.error('Count files error:', error);
                     // alert('An error occurred while counting files.');
                 }
-
             }
+
             async function countZipFiles(file) {
                 const zip = await JSZip.loadAsync(file);
                 const fileCount = Object.keys(zip.files).length;
@@ -163,7 +181,6 @@
                     reader.readAsArrayBuffer(file);
                 });
             }
-
 
             function showProgressBar(totalFiles) {
                 const progressContainer = document.getElementById('progressContainer');
@@ -203,6 +220,7 @@
                 // Start the progress
                 setTimeout(updateProgress, interval);
             }
+
             const button = document.querySelector('button');
             button.addEventListener('click', countFiles);
         });

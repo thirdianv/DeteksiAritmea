@@ -73,7 +73,7 @@ class ExcelController extends Controller
             // $response = Http::withHeaders(['Content-Type' => 'application/json'])
             //                 ->post('http://127.0.0.1:5000/train-model', $fileData);
 
-            $publicPath = storage_path('app\\public\\');
+            $publicPath = storage_path('app/public/');
 
             $response = Http::get('http://127.0.0.1:5000/api/train-model',['file_name' => $file_name, 'public_path' => $publicPath]);
             // echo($publicPath);

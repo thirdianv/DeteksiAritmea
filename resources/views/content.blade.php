@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -86,6 +87,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0px;
+            border-width: 1px;
         }
 
         .list-group-item a {
@@ -110,15 +113,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>Download Your File</h1>
-        <p>Click the link below to download the file:</p>
-
-        <a style ="margin-bottom:20px" href="#" onclick="downloadFile()">Download File</a>
-
+        <div>
+            <h1>Feature Extraction</h1>
+            <p style="text-align: justify; margin-bottom:50px">
+                Feature extraction is a critical step in preparing data for machine learning models. It involves deriving meaningful information from the provided data. In this context, various statistical measures are utilized to extract features such as mean heart rate, standard deviation of heart rate, coefficient of variation, root mean square of successive differences (RMSSD), and power spectral density (PSD) components from numeric data. These features play a key role in training machine learning models for further analysis.
+                Press the "Train Model" button to initiate the training process using the features extracted from your data.
+            </p>
+        </div>
         <form action="{{ route('load-model') }}" method="post">
             @csrf
             <input type="hidden" name="file_name" value="{{ $file_name }}">
-            <button type="submit">Use File</button>
+            <button type="submit" class="btn btn-primary toggle-button">Train Model</button>
         </form>
 
         <div class="file-list">
@@ -138,7 +143,7 @@
                     </li>
                 @endforeach
             </ul>
-        </div>        
+        </div>  
     </div>
 </body>
 </html>

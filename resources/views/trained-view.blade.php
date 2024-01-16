@@ -114,7 +114,8 @@
                     success: function(response){
                         console.log(response); // Log the entire JSON response
     
-                        var htmlContent = '<h4 style=\'margin-bottom:20px\'>Hasil Prediksi :</h4>';
+                        var htmlContent = '<h4 style=\'margin-bottom:20px\'>Prediction Results :</h4>';
+                        let votingResults = {};
     
                         for (var key in response) {
                             if (response.hasOwnProperty(key)) {
@@ -122,10 +123,28 @@
                                 var modifiedValues = response[key].map(function(value) {
                                     return value === 'A' ? 'Abnormal' : value === 'N' ? 'Normal' : value;
                                 });
+                                // Count occurrences of 'Abnormal' and 'Normal'
+                                var countAbnormal = modifiedValues.filter(value => value === 'Abnormal').length;
+                                var countNormal = modifiedValues.filter(value => value === 'Normal').length;
+
+                                // Determine the majority vote
+                                var majorityVote = countAbnormal > countNormal ? 'Abnormal' : 'Normal';
+
+                                // Store the results for this key
+                                votingResults[key] = majorityVote;
     
-                                htmlContent += '<p><strong>Prediksi ' + cleanKey + ':</strong> ' + modifiedValues.join(', ') + '</p>';
+                                htmlContent += '<p><strong>' + cleanKey + ' model:</strong> ' + modifiedValues.join(', ') + '</p>';
                             }
                         }
+
+                        // Add styling to the Conclusion paragraph, only if there's a majority vote
+                        if (Object.keys(votingResults).length > 0) {
+                            var majorityVote = votingResults[Object.keys(votingResults)[0]];
+                            var color = majorityVote === 'Normal' ? 'green' : 'red';
+
+                            htmlContent += '<p style="margin-top:35px; font-weight: bold;">Conclusion: <span style="color: ' + color + ';">' + majorityVote + '</span></p>';
+                        }
+
     
                         $('#responseContainer').html(htmlContent);
                     },
