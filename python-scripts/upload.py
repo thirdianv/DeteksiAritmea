@@ -38,7 +38,7 @@ def extract_compressed_file(file_to_extract, destination_folder):
 
 def file_check(file_name, folder_path):
     if os.path.exists(os.path.join(folder_path, file_name)):
-        path = folder_path + "\\" + file_name
+        path = folder_path + "/" + file_name
         result = extract_compressed_file(path, folder_path)
         print(result)
         return jsonify({'file_exists': True, 'message': f'File "{path}" ditemukan.'}), 200
@@ -101,6 +101,40 @@ def feature_extraction(data, label='unknown'):
 
     return [mean_value, hr_value, std_hr, cvr_value, rmssd_value, _nn50, _sdsd, lfPeak_value, hfPeak_value, lfNorm_value, hfNorm_value, lfhf_value, label]
 
+def feature_extraction_selected(data, label='unknown'):
+    numeric_data = pd.to_numeric(data, errors='coerce')
+    numeric_data = numeric_data.dropna()
+    
+    mean_value = numeric_data.mean()
+    hr_value = 60/mean_value
+    std_hr = np.std(numeric_data)
+    cvr_value = (std_hr/mean_value*100)
+    rmssd_value = np.sqrt(np.mean(np.square(np.diff(numeric_data))))
+    
+    psd = fd.welch_psd(numeric_data, show = False)
+    fd.plt.close()
+    
+    peakPSD = psd['fft_peak']
+    lfPeak_value = peakPSD[1]
+    hfPeak_value = peakPSD[2]
+    
+    normPSD = psd['fft_norm']
+    lfNorm_value = normPSD[0]
+    hfNorm_value = normPSD[1]
+    
+    lfhf_value = lfNorm_value/hfNorm_value
+    
+    _sdsd = td.sdsd(numeric_data)
+    _sdsd = _sdsd['sdsd']
+    
+    _nn50 = td.nn50(numeric_data)
+    _nn50 = _nn50['nn50']
+    
+    td.plt.close()
+
+    return [_sdsd, rmssd_value, cvr_value, std_hr, hfNorm_value, lfPeak_value, _nn50, label]
+
+
 def empty_df():
     # Dictionary with column names
     new_df = [
@@ -142,7 +176,7 @@ def feature(path, training=True):
 
 @app.route('/api/model', methods=['POST', 'GET'])
 def model():
-    print('model');
+    print('model')
     if 'file_name' not in request.json:
         return jsonify({'error': 'Nama file tidak disediakan'}), 400
 
@@ -183,7 +217,7 @@ def execute_feature_extraction():
     data = read_data(file_path)
 
     # Call the feature extraction logic function
-    feature_file = feature_extraction(data)
+    feature_file = feature_extraction_selected(data)
     feature_file = np.array(feature_file[:-1]).reshape(1,-1)
     print(feature_file)
 
@@ -243,14 +277,14 @@ def train_model():
         public_path = request.args.get('public_path')
 
         # Membagi string berdasarkan karakter "\"
-        parts = file_path.split('\\')
+        parts = file_path.split('/')
         print(parts)
 
         # Mengambil bagian yang diinginkan (di sini: indeks ke-6)
         model_folder = parts[6]
         print('file_path :', file_path)
         print('public_path :', public_path)
-        model_save_path = public_path +'models\\'+model_folder
+        model_save_path = public_path +'models/'+model_folder
         print('\nmodel_path :', model_save_path)
 
 
@@ -295,28 +329,28 @@ def plot_file():
     print('save path:', save_path)
     print('file_name:', filename_base)
 
-    raw = raw_signal_plot(sample, signal)
-    raw_save = save_plot(raw, 'raw', folder_path, filename_base)
+    # raw = raw_signal_plot(sample, signal)
+    # raw_save = save_plot(raw, 'raw', folder_path, filename_base)
 
     lendf = len(df.index)
 
     time_domain = time_domain_plot(lendf, signal)
     time_domain_save = save_plot(time_domain, 'timedomain', folder_path, filename_base)
 
-    new_DFT = DFT(signal, '#1f77b4', 'DFT PCG 1')
+    new_DFT = DFT(signal, '#1f77b4')
     new_DFT_save =  save_plot(new_DFT, 'DFT', folder_path, filename_base)
 
     # print(raw_save, time_domain_save, new_DFT)
 
     response_data = {
         'success': True,
-        'images': {'raw': raw_save, 'time_domain': time_domain_save, 'dft': new_DFT_save}
+        'images': { 'time_domain': time_domain_save, 'dft': new_DFT_save}
     }
 
     return jsonify(response_data), 200
 
 
-def DFT(sinyal, clr, judul, fs=1000):
+def DFT(sinyal, clr, fs=1000):
     N = len(sinyal)
     re_X = np.zeros(N)
     im_X = np.zeros(N)
@@ -334,7 +368,7 @@ def DFT(sinyal, clr, judul, fs=1000):
     freq = k * fs / N
     plt.figure(figsize=(12, 8))
     plt.plot(freq, magX[:N//2], color=clr, linewidth=2)
-    plt.title(judul, fontweight="bold", size=16)
+    plt.title("Frequency Domain")
     plt.xlabel('Frequency (Hz)', size=14)
     plt.ylabel('Magnitude', size=14)
     plt.grid(True)
@@ -347,30 +381,12 @@ def raw_signal_plot(sample, signal):
     plt.figure(figsize=(12, 8))
     plt.plot(sample, signal)
     plt.xlabel('Sample')
-    plt.ylabel('Amplitude (mV)')
+    plt.ylabel('RR (ms)')
     plt.title("Raw Signal")
     return plt
 
-# def time_frequency_domain(sample, signal):
-#     N = len(sample)
 
-#     fs = 1 / (sum(signal) / N)
-#     ts = 1 / fs
-
-#     # TIME DOMAIN PLOTTING
-#     x = N * ts
-#     y = signal
-
-#     plt.figure(figsize=(12, 8))
-#     plt.plot(x, y)
-#     plt.xlabel('Time (s)')
-#     plt.xlim(0, 1000)
-#     plt.ylim(0.4, 1)
-#     plt.ylabel('Amplitude (mV)')
-#     plt.title("Time Domain Signal")
-#     return plt
-
-def time_domain_plot(fs, signal):
+def time_domain_plot(N, signal):
     """
     Plots the time domain representation of a signal.
 
@@ -380,7 +396,9 @@ def time_domain_plot(fs, signal):
     - title: Title for the plot (default is "Time Domain Plot").
     """
     # Generate time vector
-    fs = 1/(sum(signal)/1000)
+    plt.figure(figsize=(12, 8))
+
+    fs = 1/(sum(signal)/N)
     t = np.arange(0, len(signal) / fs, 1 / fs)
     # print("time domain: ")
     # print(fs, t , signal)
@@ -388,7 +406,7 @@ def time_domain_plot(fs, signal):
     # Plot the time domain representation
     plt.plot(t, signal)
     plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
+    plt.ylabel('RR (ms)')
     plt.title("Time Domain Plot")
     plt.grid(True)
     return plt

@@ -126,25 +126,25 @@
                                 // Count occurrences of 'Abnormal' and 'Normal'
                                 var countAbnormal = modifiedValues.filter(value => value === 'Abnormal').length;
                                 var countNormal = modifiedValues.filter(value => value === 'Normal').length;
-
+    
                                 // Determine the majority vote
                                 var majorityVote = countAbnormal > countNormal ? 'Abnormal' : 'Normal';
-
+    
                                 // Store the results for this key
                                 votingResults[key] = majorityVote;
     
                                 htmlContent += '<p><strong>' + cleanKey + ' model:</strong> ' + modifiedValues.join(', ') + '</p>';
                             }
                         }
-
+    
                         // Add styling to the Conclusion paragraph, only if there's a majority vote
                         if (Object.keys(votingResults).length > 0) {
                             var majorityVote = votingResults[Object.keys(votingResults)[0]];
                             var color = majorityVote === 'Normal' ? 'green' : 'red';
+                            var conclusionText = majorityVote === 'Normal' ? 'Terindikasi tidak memiliki gejala aritmia ' : 'Terindikasi memiliki gejala aritmia';
 
-                            htmlContent += '<p style="margin-top:35px; font-weight: bold;">Conclusion: <span style="color: ' + color + ';">' + majorityVote + '</span></p>';
+                            htmlContent += '<p style="margin-top:35px; font-weight: bold;">Conclusion: <span style="color: ' + color + ';">' + conclusionText + '</span></p>';
                         }
-
     
                         $('#responseContainer').html(htmlContent);
                     },
@@ -159,6 +159,5 @@
             });
         });
     </script>
-    
 </body>
 </html>
